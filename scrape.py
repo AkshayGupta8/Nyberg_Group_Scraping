@@ -6,6 +6,8 @@ import copy
 
 import PyPDF2
 
+from croppdf import crop_pdf
+
 test_file = 'Long_Education.pdf'
 
 data_format = {
@@ -30,11 +32,15 @@ def extract_last_number(string):
     else:
         return None  # Return None if no numbers are found in the string
 
+def is_linkedin_string(string):
+    return string.endswith('(LinkedIn)')
+
 def extract_data_from_pdf(file_path):
+    data_entry = copy.deepcopy(data_format)
+
     with open(file_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
 
-        data_entry = copy.deepcopy(data_format)
 
         # Extract text from the PDF
         text = ''
@@ -44,6 +50,23 @@ def extract_data_from_pdf(file_path):
         lst = text.split('\n')
 
         for it in range(len(lst)):
+            if lst[it] == "Kontakt" or lst[it] == "Contact" or lst[it] == "Coordonnées":
+                count = 1
+                while not is_linkedin_string(lst[it + count]) :
+                    curr_url = data_entry["linkedinURL"]
+                    new_url = lst[it + count]
+                    if not curr_url:
+                        data_entry["linkedinURL"] = new_url
+                    else:
+                        data_entry["linkedinURL"] = f"{curr_url}{new_url}"
+                    count += 1
+                curr_url = data_entry["linkedinURL"]
+                new_url = lst[it + count]
+                if not curr_url:
+                    data_entry["linkedinURL"] = new_url
+                else:
+                    data_entry["linkedinURL"] = f"{curr_url}{new_url}"
+
             if lst[it] == 'Experience' or lst[it] == 'Erfaring':
                 data_entry["currentEmployer"] = lst[it + 1]
                 # print(f'last company: {lst[it + 1]}')
@@ -58,9 +81,9 @@ def extract_data_from_pdf(file_path):
                 while gradYear == None:
                     gradYear = extract_last_number(lst[it + count])
                     count += 1
-                    print(f"it : {it}")
-                    print(f"new_count : {new_count}")
-                    print(f"count : {count}")
+                    # print(f"it : {it}")
+                    # print(f"new_count : {new_count}")
+                    # print(f"count : {count}")
                     if count > 3:
                         major = data_entry['major']
                         additional_major = lst[it + 2 + new_count]
@@ -69,12 +92,31 @@ def extract_data_from_pdf(file_path):
                         # print(lst[it + 2 + new_count])
                     data_entry["gradYear"] = gradYear
                     # print(f'Graduating year: {grad_year}')
-        
+
         # print(lst)
 
-        for key, val in data_entry.items():
-            if val:
-                print(f"{key} : {val}")
+        # for key, val in data_entry.items():
+        #     print(f"{key} : {val}")
+    
+    cropped_file_path = f"cropped_{file_path}"
+    crop_pdf(file_path, cropped_file_path)
+
+    with open(cropped_file_path, 'rb') as file:
+        reader = PyPDF2.PdfReader(file)
+
+
+        # Extract text from the PDF
+        text = ''
+        for page in reader.pages:
+            text += page.extract_text()
+
+        lst = text.split('\n')
+
+        # for it in range(len(lst)):
+        print(lst)
+
+    return data_entry
+
 
 
 extract_data_from_pdf(test_file)
