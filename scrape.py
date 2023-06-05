@@ -2,18 +2,21 @@
 import tabula as tb
 import pandas as pd
 import re
+import copy
 
 import PyPDF2
 
-test_file = 'Most_Represented_Before_Name.pdf'
+test_file = 'Long_Education.pdf'
 
-data_entry = {
-    linkedinURL : None,
-    name : None,
-    currentTitle : None,
-    currentEmployer : None,
-    employedFor : None,
-    graduatingYear : None
+data_format = {
+    "linkedinURL" : None,
+    "name" : None,
+    "currentTitle" : None,
+    "currentEmployer" : None,
+    "employedFor" : None,
+    "gradYear" : None,
+    "university" : None,
+    "major" : None,
 }
 
 
@@ -31,30 +34,47 @@ def extract_data_from_pdf(file_path):
     with open(file_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
 
+        data_entry = copy.deepcopy(data_format)
+
         # Extract text from the PDF
         text = ''
         for page in reader.pages:
             text += page.extract_text()
 
         lst = text.split('\n')
-        print(lst)
 
-        # for it in range(len(lst)):
-        #     if lst[it] == 'Experience' or lst[it] == 'Erfaring':
-        #         print(f'last company: {lst[it + 1]}')
-        #     if lst[it] == 'Uddannelse' or lst[it] == 'Education':
-        #         print(f'University Name: {lst[it + 1]}')
-        #         print(f'What was studied: {lst[it + 2]}')
-        #         count = 2
-        #         grad_year = None
-        #         while grad_year == None:
-        #             grad_year = extract_last_number(lst[it + count])
-        #             count += 1
-        #         if count > 3:
-        #             new_count = 1
-        #             for i in range(3, count):
-        #                 print(lst[it + 2 + new_count])
-        #         print(f'Graduating year: {grad_year}')
+        for it in range(len(lst)):
+            if lst[it] == 'Experience' or lst[it] == 'Erfaring':
+                data_entry["currentEmployer"] = lst[it + 1]
+                # print(f'last company: {lst[it + 1]}')
+            if lst[it] == 'Uddannelse' or lst[it] == 'Education':
+                data_entry["university"] = lst[it + 1]
+                # print(f'University Name: {lst[it + 1]}')
+                data_entry["major"] = lst[it + 2]
+                # print(f'What was studied: {lst[it + 2]}')
+                count = 2
+                gradYear = None
+                new_count = 1
+                while gradYear == None:
+                    gradYear = extract_last_number(lst[it + count])
+                    count += 1
+                    print(f"it : {it}")
+                    print(f"new_count : {new_count}")
+                    print(f"count : {count}")
+                    if count > 3:
+                        major = data_entry['major']
+                        additional_major = lst[it + 2 + new_count]
+                        data_entry["major"] = f"{major} {additional_major}"
+                        new_count += 1
+                        # print(lst[it + 2 + new_count])
+                    data_entry["gradYear"] = gradYear
+                    # print(f'Graduating year: {grad_year}')
+        
+        # print(lst)
+
+        for key, val in data_entry.items():
+            if val:
+                print(f"{key} : {val}")
 
 
 extract_data_from_pdf(test_file)
