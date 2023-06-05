@@ -7,6 +7,16 @@ import PyPDF2
 
 test_file = 'Most_Represented_Before_Name.pdf'
 
+data_entry = {
+    linkedinURL : None,
+    name : None,
+    currentTitle : None,
+    currentEmployer : None,
+    employedFor : None,
+    graduatingYear : None
+}
+
+
 def extract_last_number(string):
     # Use regular expressions to find the last number in the string
     matches = re.findall(r'\d+', string)
