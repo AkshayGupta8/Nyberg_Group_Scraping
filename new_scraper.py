@@ -1,29 +1,21 @@
-from PyPDF2 import PdfReader, PdfWriter
+import fitz
 
 def crop_pdf(input_path, output_path):
-    with open(input_path, 'rb') as file:
-        pdf = PdfReader(file)
-        output_pdf = PdfWriter()
+    pdf = fitz.open(input_path)
+
+    for page_num in range(pdf.page_count):
+        page = pdf[page_num]
+        mediabox = page.mediabox
+        page_width = mediabox.x1 - mediabox.x0
+
+        # Calculate the new crop box dimensions
+        new_left = mediabox.x0 + (page_width / 3)
+        new_mediabox = fitz.Rect(new_left, mediabox.y0, mediabox.x1, mediabox.y1)
         
-        for page_num in range(len(pdf)):
-            page = pdf.getPage(page_num)
-            
-            # Calculate the crop box coordinates
-            media_box = page.mediaBox
-            left = media_box.getLowerLeft_x()
-            bottom = media_box.getLowerLeft_y()
-            right = media_box.getUpperRight_x()
-            top = media_box.getUpperRight_y()
-            
-            # Crop the page by removing the left 1/3
-            new_left = left + (right - left) / 3
-            page.mediaBox.lowerLeft = (new_left, bottom)
-            
-            # Add the modified page to the output PDF
-            output_pdf.addPage(page)
-            
-        # Write the output PDF to a file
-        with open(output_path, 'wb') as output_file:
-            output_pdf.write(output_file)
+        # Apply the new crop box to the page
+        page.set_cropbox(new_mediabox)
+
+    pdf.save(output_path)
+    pdf.close()
 
 crop_pdf('English.pdf', 'English_out.pdf')
