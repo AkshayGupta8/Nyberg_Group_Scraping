@@ -6,7 +6,7 @@ import copy
 
 import PyPDF2
 
-from croppdf import crop_pdf
+from newcrop import crop_pdf
 
 test_file = 'Long_Education.pdf'
 
@@ -69,37 +69,38 @@ def extract_data_from_pdf(file_path):
 
             if lst[it] == 'Experience' or lst[it] == 'Erfaring':
                 data_entry["currentEmployer"] = lst[it + 1]
-                # print(f'last company: {lst[it + 1]}')
+                # p rint(f'last company: {lst[it + 1]}')
             if lst[it] == 'Uddannelse' or lst[it] == 'Education':
                 data_entry["university"] = lst[it + 1]
-                # print(f'University Name: {lst[it + 1]}')
+                # p rint(f'University Name: {lst[it + 1]}')
                 data_entry["major"] = lst[it + 2]
-                # print(f'What was studied: {lst[it + 2]}')
+                # pr int(f'What was studied: {lst[it + 2]}')
                 count = 2
                 gradYear = None
                 new_count = 1
                 while gradYear == None:
                     gradYear = extract_last_number(lst[it + count])
                     count += 1
-                    # print(f"it : {it}")
-                    # print(f"new_count : {new_count}")
-                    # print(f"count : {count}")
+                    # pr int(f"it : {it}")
+                    # pri nt(f"new_count : {new_count}")
+                    # pri nt(f"count : {count}")
                     if count > 3:
                         major = data_entry['major']
                         additional_major = lst[it + 2 + new_count]
                         data_entry["major"] = f"{major} {additional_major}"
                         new_count += 1
-                        # print(lst[it + 2 + new_count])
+                        # pr int(lst[it + 2 + new_count])
                     data_entry["gradYear"] = gradYear
-                    # print(f'Graduating year: {grad_year}')
+                    # pri nt(f'Graduating year: {grad_year}')
 
-        # print(lst)
+        # pr nt(lst)
 
         # for key, val in data_entry.items():
-        #     print(f"{key} : {val}")
+        #     pr int(f"{key} : {val}")
     
-    cropped_file_path = f"cropped_{file_path}"
-    crop_pdf(file_path, cropped_file_path)
+    # cropped_file_path = f"cropped_{file_path}"
+    # crop_pdf(file_path, cropped_file_path)
+    cropped_file_path = f"English_out.pdf"
 
     with open(cropped_file_path, 'rb') as file:
         reader = PyPDF2.PdfReader(file)
@@ -168,4 +169,4 @@ extract_data_from_pdf(test_file)
 #             file_contents = file.read()
 
 #             # Do something with the file contents
-#             print(file_contents)
+#             pri nt(file_contents)
