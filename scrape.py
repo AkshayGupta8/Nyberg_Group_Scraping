@@ -5,15 +5,19 @@ import re
 import copy
 
 import PyPDF2
+from fitz import Document, Page, Rect
+import fitz
 
-from newcrop import crop_pdf
+import os
 
-test_file = 'Long_Education.pdf'
+# from newcrop import crop_pdf
+
+test_file = 'index_error.pdf'
 
 data_format = {
     "linkedinURL" : None,
     "name" : None,
-    "currentTitle" : None,
+    "title" : None,
     "currentEmployer" : None,
     "employedFor" : None,
     "gradYear" : None,
@@ -35,7 +39,7 @@ def extract_last_number(string):
 def is_linkedin_string(string):
     return string.endswith('(LinkedIn)')
 
-def extract_data_from_pdf(file_path):
+def extract_data_from_pdf(file_path, output_file):
     data_entry = copy.deepcopy(data_format)
 
     with open(file_path, 'rb') as file:
@@ -52,7 +56,7 @@ def extract_data_from_pdf(file_path):
         for it in range(len(lst)):
             if lst[it] == "Kontakt" or lst[it] == "Contact" or lst[it] == "Coordonnées":
                 count = 1
-                while not is_linkedin_string(lst[it + count]) :
+                while (it + count < len(lst)) and (not is_linkedin_string(lst[it + count])) :
                     curr_url = data_entry["linkedinURL"]
                     new_url = lst[it + count]
                     if not curr_url:
@@ -61,7 +65,13 @@ def extract_data_from_pdf(file_path):
                         data_entry["linkedinURL"] = f"{curr_url}{new_url}"
                     count += 1
                 curr_url = data_entry["linkedinURL"]
-                new_url = lst[it + count]
+                # print(f"it + count : {it + count}")
+                # print(f"len(lst) : {len(lst)}")
+                # print(f"lst[it + count] : {lst[it + count]}")
+                if it + count >= len(lst):
+                    new_url = ""
+                else:
+                    new_url = lst[it + count]
                 if not curr_url:
                     data_entry["linkedinURL"] = new_url
                 else:
@@ -92,35 +102,151 @@ def extract_data_from_pdf(file_path):
                         # pr int(lst[it + 2 + new_count])
                     data_entry["gradYear"] = gradYear
                     # pri nt(f'Graduating year: {grad_year}')
-
-        # pr nt(lst)
-
-        # for key, val in data_entry.items():
-        #     pr int(f"{key} : {val}")
     
-    # cropped_file_path = f"cropped_{file_path}"
-    # crop_pdf(file_path, cropped_file_path)
-    cropped_file_path = f"English_out.pdf"
+    # To get the name
+    # file_path = "English.pdf"
+    doc: Document = fitz.open(file_path)
 
-    with open(cropped_file_path, 'rb') as file:
-        reader = PyPDF2.PdfReader(file)
+    # for i in range(len(doc)):
+    page: Page = doc[0]
+    page.clean_contents()  # https://pymupdf.readthedocs.io/en/latest/faq.html#misplaced-item-insertions-on-pdf-pages
 
+    # Hard-code the rect you need
+    max_width = 8.5 * 72
+    max_height = 11 * 72
+    rect = Rect(max_width * 0.33, 0, 8.5 * 72, 11 * 72)
 
-        # Extract text from the PDF
-        text = ''
-        for page in reader.pages:
-            text += page.extract_text()
+    text = page.get_textbox(rect)
+    text_lst = text.split('\n')
+    # print(text_lst)
+    # print('=============')
+    # print('=============')
+    data_entry['name'] = text_lst[1]
+    data_entry['title'] = text_lst[2]
 
-        lst = text.split('\n')
+    new_line = f"{data_entry['name']}, " # name
+    new_line += f"{data_entry['title']}, " # title
+    new_line += f"{data_entry['linkedinURL']}, " # linkedinURL
+    new_line += f"{data_entry['currentEmployer']}, " # currentEmployer
+    new_line += f"{data_entry['employedFor']}, " # employedFor
+    new_line += f"{data_entry['gradYear']}, " # gradYear
+    new_line += f"{data_entry['university']}, " # university
+    new_line += f"{data_entry['major']}\n" # major
 
-        # for it in range(len(lst)):
-        print(lst)
+    output_file.write(new_line)
+    
+    # for key, val in data_entry.items():
+    #     print(f"{key} : {val}")
 
     return data_entry
 
+# To just run a specific file
+# ================================================================================
+# extract_data_from_pdf(test_file)
+
+# ================================================================================
+# ================================================================================
+# function to call all extract_data_from_pdf() on all files in the 'downloads' folder
+# ================================================================================
+
+def process_files_in_folder(output_file):
+    # Get the current directory
+    current_directory = os.getcwd()
+
+    # Define the path to the 'download' folder
+    folder_path = os.path.join(current_directory, 'download')
+
+    # Check if the folder exists
+    if not os.path.isdir(folder_path):
+        print("Folder 'download' not found.")
+        return
+
+    # Loop through each file in the folder
+    for filename in os.listdir(folder_path):
+        # Check if the file has a .pdf extension
+        if filename.endswith(".pdf"):
+            # Construct the full file path
+            file_path = os.path.join(folder_path, filename)
+
+            # Call the extract_data_from_pdf function with the file path
+            extract_data_from_pdf(file_path, output_file)
+            print(file_path)
+
+        else:
+            print(f"Skipping file: {filename} (not a PDF)")
+
+    print("All files processed.")
 
 
-extract_data_from_pdf(test_file)
+# ================================================================================
+# ================================================================================
+
+
+
+
+def main():
+    file_counter = 1
+    file_name = f'processed_data_{file_counter}.csv'
+
+    while os.path.exists(file_name):
+        file_counter += 1
+        file_name = f'processed_data_{file_counter}.csv'
+
+    with open(file_name, 'w') as output_file:
+        first_line = "Name, " # name
+        first_line += "Title, " # title
+        first_line += "Linkedin URL, " # linkedinURL
+        first_line += "Current Employer, " # currentEmployer
+        first_line += "Employed Duration, " # employedFor
+        first_line += "Graduation Year, " # gradYear
+        first_line += "University, " # university
+        first_line += "Major\n" # major
+
+        output_file.write(first_line)
+        process_files_in_folder(output_file)
+
+    print(f"A new file '{file_name}' has been created.")
+
+
+
+main()
+
+
+
+
+    # "linkedinURL" : None,
+    # "name" : None,
+    # "title" : None,
+    # "currentEmployer" : None,
+    # "employedFor" : None,
+    # "gradYear" : None,
+    # "university" : None,
+    # "major" : None,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
