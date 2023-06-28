@@ -124,14 +124,37 @@ def extract_data_from_pdf(file_path, output_file):
     data_entry['name'] = text_lst[1]
     data_entry['title'] = text_lst[2]
 
-    new_line = f"{data_entry['name']}, " # name
-    new_line += f"{data_entry['title']}, " # title
-    new_line += f"{data_entry['linkedinURL']}, " # linkedinURL
-    new_line += f"{data_entry['currentEmployer']}, " # currentEmployer
+    temp = f"{data_entry['name']}"
+    temp = temp.replace(",", "", 1)
+    new_line = f"{temp}, " # name
+
+    temp = f"{data_entry['title']}"
+    temp = temp.replace(",", "", 1)
+    new_line += f"{temp}, " # title
+
+    temp = f"{data_entry['linkedinURL']}"
+    temp = temp.replace(",", "", 1)
+    new_line += f"{temp}, " # linkedinURL
+
+    temp = f"{data_entry['currentEmployer']}"
+    temp = temp.replace(",", "", 1)
+    new_line += f"{temp}, " # currentEmployer
+    
+    temp = f"{data_entry['employedFor']}"
+    temp = temp.replace(",", "", 1)
     new_line += f"{data_entry['employedFor']}, " # employedFor
-    new_line += f"{data_entry['gradYear']}, " # gradYear
-    new_line += f"{data_entry['university']}, " # university
-    new_line += f"{data_entry['major']}\n" # major
+
+    temp = f"{data_entry['gradYear']}"
+    temp = temp.replace(",", "", 1)
+    new_line += f"{temp}, " # gradYear
+
+    temp = f"{data_entry['university']}"
+    temp = temp.replace(",", "", 1)
+    new_line += f"{temp}, " # university
+
+    temp = f"{data_entry['major']}"
+    temp = temp.replace(",", "", 1)
+    new_line += f"{temp}\n" # major
 
     output_file.write(new_line)
     
@@ -160,6 +183,10 @@ def process_files_in_folder(output_file):
     if not os.path.isdir(folder_path):
         print("Folder 'download' not found.")
         return
+
+    print("Resume Scraping is beginning:")
+    print("==================================================")
+    
 
     # Loop through each file in the folder
     for filename in os.listdir(folder_path):
@@ -204,8 +231,8 @@ def main():
 
         output_file.write(first_line)
         process_files_in_folder(output_file)
-
-    print(f"A new file '{file_name}' has been created.")
+    print("==================================================")
+    print(f"A new file '{file_name}' has been created.\n\n")
 
 
 
