@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Scraping and reading the data from the pdf
 import tabula as tb
 import pandas as pd
@@ -9,6 +11,7 @@ from fitz import Document, Page, Rect
 import fitz
 
 import os
+import sys
 
 # from newcrop import crop_pdf
 
@@ -132,17 +135,15 @@ def extract_data_from_pdf(file_path, output_file):
     temp = temp.replace(",", "", 1)
     new_line += f"{temp}, " # title
 
-    temp = f"{data_entry['linkedinURL']}"
-    temp = temp.replace(",", "", 1)
-    new_line += f"{temp}, " # linkedinURL
+
 
     temp = f"{data_entry['currentEmployer']}"
     temp = temp.replace(",", "", 1)
     new_line += f"{temp}, " # currentEmployer
     
-    temp = f"{data_entry['employedFor']}"
-    temp = temp.replace(",", "", 1)
-    new_line += f"{data_entry['employedFor']}, " # employedFor
+    # temp = f"{data_entry['employedFor']}"
+    # temp = temp.replace(",", "", 1)
+    # new_line += f"{data_entry['employedFor']}, " # employedFor
 
     temp = f"{data_entry['gradYear']}"
     temp = temp.replace(",", "", 1)
@@ -152,9 +153,13 @@ def extract_data_from_pdf(file_path, output_file):
     temp = temp.replace(",", "", 1)
     new_line += f"{temp}, " # university
 
-    temp = f"{data_entry['major']}"
+    # temp = f"{data_entry['major']}"
+    # temp = temp.replace(",", "", 1)
+    # new_line += f"{temp}\n" # major
+
+    temp = f"{data_entry['linkedinURL'][:-12]}"
     temp = temp.replace(",", "", 1)
-    new_line += f"{temp}\n" # major
+    new_line += f"{temp}\n" # linkedinURL
 
     output_file.write(new_line)
     
@@ -177,7 +182,10 @@ def process_files_in_folder(output_file):
     current_directory = os.getcwd()
 
     # Define the path to the 'download' folder
-    folder_path = os.path.join(current_directory, 'download')
+
+    # folder_path = os.path.join(current_directory, 'download')
+
+    folder_path = get_download_folder()
 
     # Check if the folder exists
     if not os.path.isdir(folder_path):
@@ -209,117 +217,51 @@ def process_files_in_folder(output_file):
 # ================================================================================
 
 
+def get_download_folder():
+    if getattr(sys, 'frozen', False):
+        # Running as executable
+        base_path = sys._MEIPASS
+    else:
+        # Running as script
+        base_path = os.path.dirname(os.path.abspath(__file__))
 
+    download_folder = os.path.join(base_path, 'download')
+    return download_folder
+
+def get_base_path():
+    if getattr(sys, 'frozen', False):
+        # Running as executable
+        base_path = sys._MEIPASS
+    else:
+        # Running as script
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return base_path
 
 def main():
     file_counter = 1
-    file_name = f'processed_data_{file_counter}.csv'
+    file_name = 'processed_data_1.csv'
 
     while os.path.exists(file_name):
         file_counter += 1
         file_name = f'processed_data_{file_counter}.csv'
 
-    with open(file_name, 'w') as output_file:
+    flag = False
+    with open(os.path.join(get_base_path(), file_name), 'w') as output_file:
         first_line = "Name, " # name
         first_line += "Title, " # title
-        first_line += "Linkedin URL, " # linkedinURL
         first_line += "Current Employer, " # currentEmployer
-        first_line += "Employed Duration, " # employedFor
+        # first_line += "Employed Duration, " # employedFor
         first_line += "Graduation Year, " # gradYear
         first_line += "University, " # university
-        first_line += "Major\n" # major
+        first_line += "Linkedin URL\n" # linkedinURL
+        # first_line += "Major\n" # major
 
         output_file.write(first_line)
         process_files_in_folder(output_file)
-    print("==================================================")
-    print(f"A new file '{file_name}' has been created.\n\n")
+        flag = True
+    if flag:
+        print("==================================================")
+        print(f"A new file '{file_name}' has been created.\n\n")
 
-
-
-main()
-
-
-
-
-    # "linkedinURL" : None,
-    # "name" : None,
-    # "title" : None,
-    # "currentEmployer" : None,
-    # "employedFor" : None,
-    # "gradYear" : None,
-    # "university" : None,
-    # "major" : None,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # Iterate over the PDF files in the 'download' folder
-# folder_path = "download"
-# for filename in os.listdir(folder_path):
-#     file_path = os.path.join(folder_path, filename)
-
-#     # Check if the current item is a file ending in .pdf
-#     if os.path.isfile(file_path) and file_path.lower().endswith('.pdf'):
-#         extract_data_from_pdf(file_path)
-
-
-# Iterating through the files in the 'download' folder
-# import os
-
-# folder_path = "download"  # Specify the folder name
-
-# # Get the absolute path of the current directory
-# current_directory = os.getcwd()
-
-# # Create the full path to the folder
-# folder_full_path = os.path.join(current_directory, folder_path)
-
-# # Iterate over all files in the folder
-# for filename in os.listdir(folder_full_path):
-#     file_path = os.path.join(folder_full_path, filename)
-
-#     # Check if the current item is a file
-#     if os.path.isfile(file_path):
-#         # Process the file as needed
-#         with open(file_path, "r") as file:
-#             # Read the contents of the file
-#             file_contents = file.read()
-
-#             # Do something with the file contents
-#             pri nt(file_contents)
+if __name__ == '__main__':
+  main()
