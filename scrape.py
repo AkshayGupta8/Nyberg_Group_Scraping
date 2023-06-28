@@ -2,7 +2,6 @@
 
 # Scraping and reading the data from the pdf
 import tabula as tb
-import pandas as pd
 import re
 import copy
 
@@ -12,6 +11,8 @@ import fitz
 
 import os
 import sys
+
+import xlsxwriter
 
 # from newcrop import crop_pdf
 
@@ -28,6 +29,20 @@ data_format = {
     "major" : None,
 }
 
+data_col = {
+    "linkedinURL" : 5,
+    "name" : 0,
+    "title" : 1,
+    "currentEmployer" : 2,
+    "employedFor" : None,
+    "gradYear" : 3,
+    "university" : 4,
+    "major" : None,
+}
+
+entry_count = 1 # used for the row
+excel = None
+excel_sheet = None
 
 def extract_last_number(string):
     # Use regular expressions to find the last number in the string
@@ -127,18 +142,23 @@ def extract_data_from_pdf(file_path, output_file):
     data_entry['name'] = text_lst[1]
     data_entry['title'] = text_lst[2]
 
+    global entry_count
+
     temp = f"{data_entry['name']}"
     temp = temp.replace(",", "", 1)
+    excel_sheet.write(entry_count, data_col['name'], temp)
     new_line = f"{temp}, " # name
 
     temp = f"{data_entry['title']}"
     temp = temp.replace(",", "", 1)
+    excel_sheet.write(entry_count, data_col['title'], temp)
     new_line += f"{temp}, " # title
 
 
 
     temp = f"{data_entry['currentEmployer']}"
     temp = temp.replace(",", "", 1)
+    excel_sheet.write(entry_count, data_col['currentEmployer'], temp)
     new_line += f"{temp}, " # currentEmployer
     
     # temp = f"{data_entry['employedFor']}"
@@ -147,10 +167,12 @@ def extract_data_from_pdf(file_path, output_file):
 
     temp = f"{data_entry['gradYear']}"
     temp = temp.replace(",", "", 1)
+    excel_sheet.write(entry_count, data_col['gradYear'], temp)
     new_line += f"{temp}, " # gradYear
 
     temp = f"{data_entry['university']}"
     temp = temp.replace(",", "", 1)
+    excel_sheet.write(entry_count, data_col['university'], temp)
     new_line += f"{temp}, " # university
 
     # temp = f"{data_entry['major']}"
@@ -159,8 +181,11 @@ def extract_data_from_pdf(file_path, output_file):
 
     temp = f"{data_entry['linkedinURL'][:-12]}"
     temp = temp.replace(",", "", 1)
+    excel_sheet.write(entry_count, data_col['linkedinURL'], temp)
     new_line += f"{temp}\n" # linkedinURL
-
+    
+    entry_count = entry_count + 1
+    
     output_file.write(new_line)
     
     # for key, val in data_entry.items():
@@ -244,9 +269,23 @@ def main():
     while os.path.exists(file_name):
         file_counter += 1
         file_name = f'processed_data_{file_counter}.csv'
+    
 
     flag = False
-    with open(os.path.join(get_base_path(), file_name), 'w') as output_file:
+    output_file_path = os.path.join(get_base_path(), file_name)
+    with open(output_file_path, 'w') as output_file:
+        global excel 
+        excel_name = str(output_file_path)
+        excel_name = excel_name[:-4]
+        excel_name = f"{excel_name}.xlsx"
+        excel = xlsxwriter.Workbook(excel_name)
+        global excel_sheet 
+        excel_sheet = excel.add_worksheet()
+
+        for key, val in data_col.items():
+            if val:
+                excel_sheet.write(0, data_col[key], key)
+
         first_line = "Name, " # name
         first_line += "Title, " # title
         first_line += "Current Employer, " # currentEmployer
@@ -262,6 +301,8 @@ def main():
     if flag:
         print("==================================================")
         print(f"A new file '{file_name}' has been created.\n\n")
+        # global excel
+        excel.close()
 
 if __name__ == '__main__':
   main()
