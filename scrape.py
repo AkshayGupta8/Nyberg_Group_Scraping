@@ -193,14 +193,6 @@ def extract_data_from_pdf(file_path, output_file):
 
     return data_entry
 
-# To just run a specific file
-# ================================================================================
-# extract_data_from_pdf(test_file)
-
-# ================================================================================
-# ================================================================================
-# function to call all extract_data_from_pdf() on all files in the 'downloads' folder
-# ================================================================================
 
 def process_files_in_folder(output_file):
     # Get the current directory
@@ -237,11 +229,6 @@ def process_files_in_folder(output_file):
 
     print("All files processed.")
 
-
-# ================================================================================
-# ================================================================================
-
-
 def get_download_folder():
     if getattr(sys, 'frozen', False):
         # Running as executable
@@ -259,7 +246,7 @@ def get_base_path():
         base_path = sys._MEIPASS
     else:
         # Running as script
-        base_path = os.path.dirname(os.path.abspath(__file__))
+        base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
     return base_path
 
 def main():
@@ -300,7 +287,8 @@ def main():
         flag = True
     if flag:
         print("==================================================")
-        print(f"A new file '{file_name}' has been created.\n\n")
+        print(f"A new file '{file_name}' has been created.")
+        print(f"A new file '{file_name[:-3]}xlsx' has been created.")
         # global excel
         excel.close()
 
